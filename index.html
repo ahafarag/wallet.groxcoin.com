@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Grox Web Wallet</title>
+<meta name="description" content="The official Grox web wallet. Your keys are created and kept in your browser; they are never sent anywhere.">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval' 'unsafe-eval'; worker-src 'self' blob:; connect-src 'self' https:; img-src 'self' data:; style-src 'self' 'unsafe-inline'; base-uri 'none'; form-action 'none'">
+<meta name="referrer" content="no-referrer">
+<link rel="icon" type="image/png" href="grox-logo.png">
+<style>
+  :root { --bg:#0b0c0f; --panel:#14171d; --panel2:#1a1e26; --line:#252a33; --text:#ece9e2; --muted:#9097a1; --faint:#5d636d; --gold:#f2b544; --gold-2:#ffd27a; --gold-ink:#1a1305; --red:#ff6b6b; --green:#5ad18c;
+    --sans: system-ui, -apple-system, "Segoe UI", "Noto Sans Arabic", "Tahoma", sans-serif; --mono: ui-monospace, "Cascadia Mono", "Consolas", monospace; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--text); font-family: var(--sans); font-size: 16px; line-height: 1.55; }
+  a { color: var(--gold-2); }
+  .wrap { max-width: 880px; margin: 0 auto; padding: 0 20px 60px; }
+  header { display: flex; align-items: center; justify-content: space-between; padding: 18px 0; border-bottom: 1px solid var(--line); margin-bottom: 28px; gap: 12px; }
+  .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 18px; text-decoration: none; color: var(--text); }
+  .brand img { width: 30px; height: 30px; }
+  .brand small { color: var(--muted); font-weight: 500; font-size: 13px; }
+  .hdr { display: flex; gap: 8px; align-items: center; }
+  h1 { font-size: 30px; line-height: 1.2; margin: 0 0 8px; }
+  h2 { font-size: 20px; margin: 0 0 12px; }
+  p { margin: 0 0 12px; }
+  .muted { color: var(--muted); } .small { font-size: 14px; }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 22px; margin-bottom: 16px; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .btn { appearance: none; border: 1px solid var(--line); background: var(--panel2); color: var(--text); font: inherit; font-weight: 600; padding: 11px 18px; border-radius: 10px; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; }
+  .btn:hover { border-color: #3a414d; }
+  .btn.primary { background: linear-gradient(180deg, var(--gold-2), var(--gold)); color: var(--gold-ink); border-color: transparent; }
+  .btn.danger { color: var(--red); }
+  .btn.small { padding: 7px 12px; font-size: 14px; }
+  .btn:disabled { opacity: .5; cursor: not-allowed; }
+  .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+  label { display: block; font-size: 14px; color: var(--muted); margin: 14px 0 6px; }
+  input, textarea, select { width: 100%; background: var(--bg); color: var(--text); border: 1px solid var(--line); border-radius: 10px; padding: 11px 12px; font: inherit; }
+  textarea { font-family: var(--mono); font-size: 14px; min-height: 92px; resize: vertical; }
+  input:focus, textarea:focus { outline: 2px solid rgba(242,181,68,.35); border-color: var(--gold); }
+  .mono { font-family: var(--mono); font-size: 14px; word-break: break-all; }
+  .warn { border-color: rgba(242,181,68,.45); background: rgba(242,181,68,.06); }
+  .bad { color: var(--red); } .ok { color: var(--green); }
+  .seed { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin: 12px 0; }
+  .seed span { background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 7px 8px; font-family: var(--mono); font-size: 14px; }
+  .seed span i { color: var(--faint); font-style: normal; margin-inline-end: 6px; font-size: 12px; }
+  .bal { font-size: 34px; font-weight: 700; font-family: var(--mono); line-height: 1.2; }
+  .bal small { font-size: 16px; color: var(--muted); }
+  .k { color: var(--muted); font-size: 14px; }
+  .bar { height: 6px; background: var(--line); border-radius: 4px; overflow: hidden; margin-top: 8px; }
+  .bar > div { height: 100%; background: var(--gold); width: 0; transition: width .3s; }
+  .tabs { display: flex; gap: 6px; margin-bottom: 16px; flex-wrap: wrap; }
+  .tabs button { background: none; border: 1px solid var(--line); color: var(--muted); border-radius: 999px; padding: 7px 14px; font: inherit; font-size: 14px; cursor: pointer; }
+  .tabs button.on { color: var(--gold-ink); background: var(--gold); border-color: var(--gold); font-weight: 600; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th { text-align: start; color: var(--muted); font-weight: 500; padding: 8px 10px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+  td { padding: 9px 10px; border-bottom: 1px solid var(--line); font-family: var(--mono); font-size: 13px; white-space: nowrap; }
+  .scroll { overflow-x: auto; }
+  .qr { background: #fff; padding: 10px; border-radius: 10px; display: inline-block; line-height: 0; }
+  .qr img { width: 180px; height: 180px; image-rendering: pixelated; }
+  .hide { display: none !important; }
+  .pill { display: inline-block; font-size: 12px; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); }
+  .center { text-align: center; }
+  .note { font-size: 13px; color: var(--faint); }
+  .toast { position: fixed; inset-inline-start: 50%; bottom: 24px; transform: translateX(-50%); background: var(--panel2); border: 1px solid var(--line); padding: 10px 16px; border-radius: 10px; font-size: 14px; z-index: 9; }
+  [dir=rtl] .toast { transform: translateX(50%); }
+  .check { display: flex; gap: 10px; align-items: flex-start; margin: 14px 0; color: var(--text); font-size: 15px; }
+  .check input { width: auto; margin-top: 4px; }
+  footer { margin-top: 30px; padding-top: 16px; border-top: 1px solid var(--line); font-size: 13px; color: var(--faint); display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
+  @media (max-width: 700px) { .grid2, .grid3 { grid-template-columns: 1fr; } .seed { grid-template-columns: repeat(3, 1fr); } h1 { font-size: 24px; } .bal { font-size: 28px; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <a class="brand" href="https://groxcoin.com" rel="noopener"><img src="grox-logo.png" alt=""><span>Grox <span data-t="title">Web Wallet</span></span><small class="pill">beta</small></a>
+    <div class="hdr">
+      <button class="btn small hide" id="lockBtn" data-t="lock">Lock</button>
+      <button class="btn small" id="langBtn">العربي</button>
+    </div>
+  </header>
+
+  <!-- Loading -->
+  <section id="vLoading" class="card center"><p class="muted" data-t="loading">Loading the wallet engine…</p></section>
+
+  <!-- Welcome -->
+  <section id="vWelcome" class="hide">
+    <h1 data-t="welcome_h">Your Grox, in your browser</h1>
+    <p class="muted" data-t="welcome_p">Your keys are created and kept on this device only. They are never sent to us or to the node. Write down your 25-word seed: it is the only way to get your coins back.</p>
+    <div class="grid3" style="margin-top:18px">
+      <div class="card"><h2 data-t="new_h">New wallet</h2><p class="muted small" data-t="new_p">Create a fresh wallet and get its 25-word seed.</p><button class="btn primary" id="goNew" data-t="new_b">Create wallet</button></div>
+      <div class="card"><h2 data-t="restore_h">Restore</h2><p class="muted small" data-t="restore_p">Use the 25-word seed from the Grox Wallet app, the CLI or this site.</p><button class="btn" id="goRestore" data-t="restore_b">Restore from seed</button></div>
+      <div class="card" id="openCard"><h2 data-t="open_h">Open</h2><p class="muted small" data-t="open_p">Open the wallet saved in this browser.</p><button class="btn" id="goOpen" data-t="open_b">Open saved wallet</button></div>
+    </div>
+    <div class="card warn small"><b data-t="safety_h">Stay safe.</b> <span data-t="safety_p">The only official address is wallet.groxcoin.com. Don't use a shared or public computer. Nobody from Grox will ever ask for your seed.</span></div>
+  </section>
+
+  <!-- Password (new/restore/open) -->
+  <section id="vPass" class="hide">
+    <div class="card" style="max-width:520px">
+      <h2 id="passTitle"></h2>
+      <div id="restoreFields" class="hide">
+        <label for="seedIn" data-t="seed_l">25-word seed</label>
+        <textarea id="seedIn" autocomplete="off" spellcheck="false" autocapitalize="off"></textarea>
+        <label for="heightIn" data-t="height_l">Restore from block (optional)</label>
+        <input id="heightIn" inputmode="numeric" placeholder="0">
+        <p class="note" data-t="height_n">Leave empty to scan the whole chain. A block just before your first payment makes the scan faster.</p>
+      </div>
+      <label for="pw1" data-t="pw_l">Password for this device</label>
+      <input id="pw1" type="password" autocomplete="new-password">
+      <div id="pw2Box"><label for="pw2" data-t="pw2_l">Repeat password</label><input id="pw2" type="password" autocomplete="new-password"></div>
+      <p class="note" data-t="pw_n">The password encrypts the wallet saved in this browser. It is not your seed and can't recover your coins.</p>
+      <p id="passErr" class="bad small"></p>
+      <div class="row"><button class="btn primary" id="passGo" data-t="continue">Continue</button><button class="btn" id="passBack" data-t="back">Back</button></div>
+    </div>
+  </section>
+
+  <!-- Show seed after create -->
+  <section id="vSeed" class="hide">
+    <div class="card warn">
+      <h2 data-t="seed_h">Write down your seed</h2>
+      <p data-t="seed_p">These 25 words are your wallet. Write them on paper, in order, and keep them offline. Anyone with them can take your coins; without them, a lost device means lost coins.</p>
+      <div class="seed" id="seedGrid"></div>
+      <label class="check"><input type="checkbox" id="seedOk"><span data-t="seed_ok">I wrote down my 25 words and keep them safe.</span></label>
+      <button class="btn primary" id="seedDone" disabled data-t="continue">Continue</button>
+    </div>
+  </section>
+
+  <!-- Wallet -->
+  <section id="vWallet" class="hide">
+    <div class="card">
+      <div class="row" style="justify-content:space-between;align-items:flex-start">
+        <div>
+          <div class="k" data-t="balance">Balance</div>
+          <div class="bal" id="bal">—</div>
+          <div class="k" id="unl"></div>
+        </div>
+        <div style="min-width:220px">
+          <div class="k" id="syncTxt"></div>
+          <div class="bar"><div id="syncBar"></div></div>
+        </div>
+      </div>
+    </div>
+    <div class="tabs"><button data-tab="receive" class="on" data-t="receive">Receive</button><button data-tab="send" data-t="send">Send</button><button data-tab="history" data-t="history">History</button><button data-tab="settings" data-t="settings">Settings</button></div>
+
+    <div id="tReceive" class="card">
+      <div class="grid2" style="grid-template-columns:auto 1fr;align-items:center">
+        <div class="qr"><img id="qr" alt="QR"></div>
+        <div>
+          <div class="k" data-t="your_addr">Your Grox address</div>
+          <div class="mono" id="addr" style="margin:8px 0 12px"></div>
+          <button class="btn small" id="copyAddr" data-t="copy">Copy</button>
+          <p class="note" style="margin-top:12px" data-t="recv_n">Mined coins and payments show up after the wallet syncs. Mined coins unlock after 60 blocks, transfers after 10.</p>
+        </div>
+      </div>
+    </div>
+
+    <div id="tSend" class="card hide" style="max-width:620px">
+      <label for="toIn" data-t="to_l">Send to (Grox address)</label>
+      <input id="toIn" class="mono" autocomplete="off" spellcheck="false" placeholder="G…">
+      <label for="amtIn" data-t="amt_l">Amount (GROX)</label>
+      <div class="row" style="flex-wrap:nowrap"><input id="amtIn" inputmode="decimal" placeholder="0.0"><button class="btn small" id="maxBtn" data-t="max">Max</button></div>
+      <p id="sendErr" class="bad small"></p>
+      <button class="btn primary" id="sendPrep" data-t="review">Review</button>
+      <div id="sendConfirm" class="hide" style="margin-top:16px">
+        <div class="card warn" style="margin:0 0 12px">
+          <div class="k" data-t="sending">You are sending</div>
+          <div class="bal" id="cAmt" style="font-size:24px"></div>
+          <div class="k" style="margin-top:8px" data-t="to">To</div><div class="mono" id="cTo"></div>
+          <div class="k" style="margin-top:8px" data-t="fee">Network fee</div><div class="mono" id="cFee"></div>
+        </div>
+        <div class="row"><button class="btn primary" id="sendGo" data-t="send_now">Send now</button><button class="btn" id="sendCancel" data-t="cancel">Cancel</button></div>
+      </div>
+      <p id="sendOk" class="ok small"></p>
+    </div>
+
+    <div id="tHistory" class="card hide">
+      <div class="scroll"><table><thead><tr><th data-t="h_when">When</th><th data-t="h_type">Type</th><th data-t="h_amt">Amount</th><th data-t="h_block">Block</th><th data-t="h_status">Status</th></tr></thead><tbody id="hist"></tbody></table></div>
+    </div>
+
+    <div id="tSettings" class="hide">
+      <div class="card">
+        <h2 data-t="node_h">Node</h2>
+        <p class="muted small" data-t="node_p">The node only sends chain data to your browser; it never sees your keys. You can use your own node (it needs HTTPS and to allow this site).</p>
+        <div class="row" style="flex-wrap:nowrap"><input id="nodeIn" class="mono"><button class="btn small" id="nodeSave" data-t="save">Save</button></div>
+        <p class="k small" id="nodeState"></p>
+      </div>
+      <div class="card">
+        <h2 data-t="seedshow_h">Show seed</h2>
+        <p class="muted small" data-t="seedshow_p">Enter your password to see your 25-word seed. Make sure nobody is watching your screen.</p>
+        <div class="row" style="flex-wrap:nowrap"><input id="pwSeed" type="password" autocomplete="current-password"><button class="btn small" id="seedShow" data-t="show">Show</button></div>
+        <div class="seed hide" id="seedGrid2"></div>
+      </div>
+      <div class="card">
+        <h2 data-t="rescan_h">Rescan</h2>
+        <p class="muted small" data-t="rescan_p">If a payment is missing, scan the chain again from your restore block.</p>
+        <button class="btn small" id="rescan" data-t="rescan_b">Rescan</button>
+      </div>
+      <div class="card">
+        <h2 class="bad" data-t="forget_h">Remove from this browser</h2>
+        <p class="muted small" data-t="forget_p">Deletes the saved wallet from this browser. Your coins stay on the chain and come back with your seed.</p>
+        <button class="btn danger small" id="forget" data-t="forget_b">Remove wallet from this browser</button>
+      </div>
+    </div>
+  </section>
+
+  <footer><span data-t="foot">Keys never leave your browser. Open source engine (monero-ts) built from the Grox code.</span><span><a href="https://groxcoin.com">groxcoin.com</a> · <a href="https://explorer.groxcoin.com">explorer</a> · <a href="https://github.com/ahafarag/grox-coin">GitHub</a></span></footer>
+</div>
+<script src="app.js"></script>
+</body>
+</html>
